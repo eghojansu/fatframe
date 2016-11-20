@@ -1,0 +1,42 @@
+#!/usr/bin/env php
+<?php
+
+require __DIR__.'/bootstrap.php';
+
+// -----------------------------------------------------------------------------
+
+$app = new Symfony\Component\Console\Application;
+// scaning commands
+$commandFiles = (new Symfony\Component\Finder\Finder)->files()->in(__DIR__.'/command')->name('*Command.php');
+foreach ($commandFiles as $file) {
+    $content = $file->getContents();
+
+    // skip abstract
+    if (preg_match('/abstract class/i', $content)) {
+        continue;
+    }
+
+    // get namespace
+    $namespace = null;
+    if (preg_match('/namespace ([\w\\\\]+)/', $content, $matches)) {
+        $namespace = $matches[1].'\\';
+    }
+
+    // check first
+    $command = $namespace . basename($file, '.php');
+    if (false === class_exists($command)) {
+        continue;
+    }
+
+    // add command
+    $app->add(new $command);
+}
+unset($command, $commandFiles);
+
+// fix argv
+if (2 === $_SERVER['argc'] && '/' === $_SERVER['argv'][1]) {
+    $_SERVER['argc'] = 1;
+    array_pop($_SERVER['argv']);
+}
+
+$app->run();

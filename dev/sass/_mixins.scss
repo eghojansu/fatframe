@@ -1,0 +1,27 @@
+@mixin fa-bg-before {
+    &:before {
+        position: absolute;
+        font-family: FontAwesome;
+        font-size: 14px;
+        font-weight: bold;
+    }
+}
+@mixin fa-bg-after {
+    &:after {
+        position: absolute;
+        font-family: FontAwesome;
+        font-size: 14px;
+        font-weight: bold;
+    }
+}
+
+@mixin sortable-mixin {
+    @include fa-bg-before;
+
+    &:before {
+        position: relative;
+        float: right;
+        content: "\f0dc";
+        color: #ccc;
+    }
+}

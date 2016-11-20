@@ -1,0 +1,17 @@
+{{ @form->open() }}
+    {{ @form->rowOpen() }}
+        {{ @form->row('text', 'username', null, [], ['control-class'=>'col-sm-3']) }}
+    {{ @form->rowClose() }}
+    {{ @form->rowOpen() }}
+        {{ @form->row('password', 'new_password', null, [], ['control-class'=>'col-sm-3']) }}
+    {{ @form->rowClose() }}
+    {{ @form->rowOpen() }}
+        {{ @form->row('checkbox', 'active', null, ['value'=>1,'wrapLabel'=>['class'=>'radio-inline'],'override'=>true]) }}
+    {{ @form->rowClose() }}
+    {{ @form->rowOpen() }}
+        <div class="col-sm-10 col-sm-offset-2">
+            <button type="submit" class="btn btn-primary"><i class="fa fa-check"></i> Simpan</button>
+            <a href="{{ 'crud_index'|path }}" class="btn btn-default"><i class="fa fa-ban"></i> Batal</a>
+        </div>
+    {{ @form->rowClose() }}
+{{ @form->close() }}

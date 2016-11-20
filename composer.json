@@ -1,0 +1,29 @@
+{
+	"name": "eghojansu/fatframe",
+	"description": "Fatfree framework bootstrap",
+    "keywords": ["fatfree", "php", "bootstrap", "validation", "form", "user", "framework", "fatframe"],
+	"homepage": "https://github.com/eghojansu/fatframe",
+	"license": "MIT",
+    "type": "project",
+    "authors": [
+        {
+            "name": "Eko Kurniawan",
+            "email": "ekokurniawanbs@gmail.com",
+            "role": "Developer"
+        }
+    ],
+	"require": {
+		"php": ">=5.4",
+		"bcosca/fatfree-core": "~3.6"
+	},
+    "require-dev": {
+        "symfony/console": "~3.1",
+        "symfony/process": "~3.1",
+        "symfony/filesystem": "~3.1",
+        "fzaninotto/faker": "~1.6",
+        "symfony/finder": "~3.1"
+    },
+    "autoload": {
+        "files": ["app/core/helper.php"]
+    }
+}

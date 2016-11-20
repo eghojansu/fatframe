@@ -1,0 +1,57 @@
+{
+  "name": "fatframe",
+  "authors": [
+    "Eko Kurniawan <setiawanegho@gmail.com>"
+  ],
+  "license": "MIT",
+  "homepage": "https://github.com/eghojansu/fatframe",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests",
+    "vendor"
+  ],
+  "dependencies": {
+    "font-awesome": "^4.7.0",
+    "bootstrap-sass": "^3.3.7",
+    "toastr": "^2.1.3",
+    "spectrum": "bgrins/spectrum#^1.8.0",
+    "jquery.inputmask": "^3.3.3",
+    "autoNumeric": "^1.9.46",
+    "select2": "^4.0.3",
+    "select2-bootstrap-theme": "^0.1.0-beta.9",
+    "bootbox.js": "^4.4.0",
+    "bootstrap-datepicker": "uxsolutions/bootstrap-datepicker#^1.6.4"
+  },
+  "overrides": {
+    "jquery.inputmask": {
+      "main": "dist/jquery.inputmask.bundle.js"
+    },
+    "bootbox.js": {
+      "dependencies": {
+        "bootstrap-sass": "*"
+      }
+    },
+    "select2": {
+      "dependencies": {
+        "bootstrap-sass": "*"
+      }
+    },
+    "select2-bootstrap-theme": {
+      "dependencies": {
+        "bootstrap-sass": "*",
+        "select2": "*"
+      },
+      "main": "src/select2-bootstrap.scss"
+    },
+    "toastr": {
+      "main": [
+        "toastr.js",
+        "toastr.scss"
+      ]
+    }
+  }
+}
