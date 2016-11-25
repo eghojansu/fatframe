@@ -36,13 +36,15 @@ $template = Template::instance();
 $filters = [
     'path'=>'fa::path',
     'view'=>'fa::view',
-    'bool'=>'fa::bool',
 ];
 foreach ($filters as $alias => $filter) {
     $alias = is_numeric($alias)?$filter:$alias;
     $template->filter($alias, $filter);
 }
-foreach (ext::getExtension() as $alias=>$ext) {
+foreach (filter::getFilters() as $alias=>$filter) {
+    $template->filter($alias, 'filter::'.$filter);
+}
+foreach (ext::getExtensions() as $alias=>$ext) {
     $template->extend($alias, 'ext::'.$ext);
 }
 

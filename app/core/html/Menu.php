@@ -8,6 +8,7 @@ class Menu extends HTML
 {
     protected $parent;
     protected $menu;
+    protected $menuKey;
     protected $hide;
     protected $option;
     protected $activeRoute;
@@ -20,6 +21,8 @@ class Menu extends HTML
     {
         $this->hide = $hide;
         $this->menu = $menu;
+        $this->parent = $parent;
+        $this->menuKey = implode('.', array_filter([$this->parent?$this->parent->getKey():'',$this->menu]));
         $this->option = ($option?:[])+[
             'route'=>null,
             'args'=>[],
@@ -32,7 +35,6 @@ class Menu extends HTML
             'attr'=>[],
             'list'=>[],
         ];
-        $this->parent = $parent;
     }
 
     public function add($menu, array $option = null, $hide = false)
@@ -59,9 +61,48 @@ class Menu extends HTML
         return $this;
     }
 
+    public function &get($menu)
+    {
+        $null = null;
+        $var =& $this->childs;
+        $parts = explode('.', $menu);
+        foreach ($parts as $part) {
+            if (!is_array($var))
+                $var = $var instanceof Menu ? $var->getChild() : [];
+            if (array_key_exists($part,$var))
+                $var=&$var[$part];
+            else {
+                $var=&$null;
+                break;
+            }
+        }
+
+        return $var;
+    }
+
+    public function isRoot()
+    {
+        return is_null($this->parent);
+    }
+
+    public function getRoot()
+    {
+        $parent = $this->parent;
+        do {
+            $root = $parent;
+        } while ($parent && ($parent = $parent->getParent()));
+
+        return $root;
+    }
+
     public function getName()
     {
         return $this->menu;
+    }
+
+    public function getKey()
+    {
+        return $this->menuKey;
     }
 
     public function getOption()
@@ -77,6 +118,16 @@ class Menu extends HTML
     public function hasChild()
     {
         return count($this->childs) > 0;
+    }
+
+    public function childCount()
+    {
+        return count($this->childs);
+    }
+
+    public function getChild()
+    {
+        return $this->childs;
     }
 
     public function setDefault(array $default)
@@ -121,7 +172,7 @@ class Menu extends HTML
 
     public function isActive()
     {
-        return $this->option['identifier']?$this->menu === $this->activeRoute :
+        return $this->option['identifier']?$this->menuKey === $this->activeRoute :
             $this->option['route'] === $this->activeRoute;
     }
 

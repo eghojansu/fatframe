@@ -157,6 +157,9 @@ final class fa
     public static function path($path, array $params = [])
     {
         $base = Base::instance();
+        $PARAMS = $base->get('PARAMS');
+        unset($PARAMS[0]);
+        $params += $PARAMS;
 
         if (false === strpos($path, '/') && $p = $base->get('ALIASES.'.$path)) {
             $path = ltrim($p,'/');
@@ -172,12 +175,12 @@ final class fa
                         return $p;
                     }
 
-                    return array_key_exists($i,$params)?
-                        $params[$i]:
-                        $match[0];
-                },$path);
+                    $p = array_key_exists($i,$params)?$params[$i]:$match[0];
+                    unset($params[$i]);
 
-            foreach ($base->get('PARAMS') as $key => $value) {
+                    return $p;
+                },$path);
+            foreach ($PARAMS as $key => $value) {
                 unset($params[$key]);
             }
         }
@@ -188,6 +191,19 @@ final class fa
     public static function bool($val)
     {
         return Base::instance()->get($val?'boolean.yes':'boolean.no');
+    }
+
+    public static function dump($message, $halt = true)
+    {
+        ob_clean();
+
+        echo '<pre>';
+        var_dump($message);
+        echo '</pre>';
+
+        if ($halt) {
+            die;
+        }
     }
 }
 
@@ -221,7 +237,28 @@ final class nav
 
     public static function menuIcon($icon)
     {
-        return '<i class="fa fa-fw fa-'.$icon.'"></i> ';
+        return '<i class="fa fa-'.$icon.'"></i> ';
+    }
+
+    public static function attr($route, $icon = null, $identifier = false, array $merge = [])
+    {
+        $attr = array_merge([
+            'route'=>$route,
+            'prefix'=>self::menuIcon($icon),
+            'identifier'=>$identifier,
+        ], $merge);
+
+        return $attr;
+    }
+
+    public static function attrParent($icon = null)
+    {
+        $attr = [
+            'url'=>'#',
+            'prefix'=>self::menuIcon($icon),
+        ] + self::$caret + self::$list + self::$link + self::$attr;
+
+        return $attr;
     }
 
     public static function left()
@@ -229,10 +266,10 @@ final class nav
         $menu = new app\core\html\Menu(null, ['attr'=>['class'=>'nav navbar-nav']]);
         $menu
             ->setActiveRoute(self::activeRoute())
-            ->add('Dashboard', ['route'=>'dashboard','prefix'=>self::menuIcon('dashboard')])
+            ->add('Dashboard', self::attr('dashboard','dashboard'))
             ->getParent()
-            ->add('Master', ['url'=>'#','prefix'=>self::menuIcon('hdd-o')]+self::$caret+self::$list+self::$attr+self::$link)
-                ->add('Data User', ['identifier'=>true,'route'=>'crud_index','args'=>['master'=>'user'],'prefix'=>self::menuIcon('users')])
+            ->add('Master', self::attrParent('hdd-o'))
+                ->add('Data User', self::attr('crud_index','users',true, ['args'=>['master'=>'user']]))
         ;
 
         return $menu->render();
@@ -243,11 +280,11 @@ final class nav
         $menu = new app\core\html\Menu(null, ['attr'=>['class'=>'nav navbar-nav navbar-right']]);
         $menu
             ->setActiveRoute(self::activeRoute())
-            ->add('Tools', ['url'=>'#','prefix'=>self::menuIcon('cogs')]+self::$caret+self::$list+self::$attr+self::$link)
-                ->add('Profile', ['route'=>'profile','prefix'=>self::menuIcon('user')])
+            ->add('Tools', self::attrParent('cogs'))
+                ->add('Profile', self::attr('profile','user'))
                 ->getParent()
                 ->addDivider()
-                ->add('Logout', ['route'=>'logout','prefix'=>self::menuIcon('power-off')])
+                ->add('Logout', self::attr('logout','power-off'))
         ;
 
         return $menu->render();
@@ -259,7 +296,7 @@ final class nav
  */
 class ext
 {
-    public static function getExtension()
+    public static function getExtensions()
     {
         return [
             'while'=>'_while',
@@ -280,5 +317,32 @@ class ext
                 $template->build($node).
                 '<?php '.$template->token($attrib['then']).'; ?>'.
             '<?php endwhile; ?>';
+    }
+}
+
+/**
+ * Template filter
+ */
+class filter
+{
+    public static function getFilters()
+    {
+        return [
+            'bool'=>'bool',
+            'rdate'=>'rdate',
+        ];
+    }
+
+    public static function bool($val)
+    {
+        return Base::instance()->get($val?'boolean.yes':'boolean.no');
+    }
+
+    public static function rdate($date)
+    {
+        $date = array_filter(explode('-', $date));
+        krsort($date);
+
+        return $date?implode('-', $date):null;
     }
 }

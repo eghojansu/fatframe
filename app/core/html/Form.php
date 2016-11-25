@@ -631,7 +631,7 @@ class Form extends HTML
             ],
         ];
         $attrs += $default;
-        $value = $attrs['value']?explode('-', $attrs['value']):date('Y-m-d');
+        $value = explode('-', $attrs['value']?$attrs['value']:date('Y-m-d'));
         $startYear = $attrs['startYear'];
         $endYear = $attrs['endYear'];
         $optionsMonth = $attrs['months'];

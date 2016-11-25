@@ -402,7 +402,7 @@ class Validation
             $map = new $mapNamespace;
             $options = ['limit'=>1];
             $fields = [$field=>$value];
-            $map->loadBy($fields, $options, 60);
+            $map->loadBy($fields, $options, 0);
 
             return $map->valid();
         }
@@ -423,7 +423,7 @@ class Validation
         $map = clone $this->map;
         $options = ['limit'=>1];
         $fields = [$field=>$value];
-        $map->loadBy($fields, $options, 60);
+        $map->loadBy($fields, $options, 0);
 
         $result = $map->dry();
 
@@ -465,25 +465,20 @@ class Validation
     {
         $value    = $this->getValue();
         $mayEmpty &= ('' === $value || is_null($value));
+
+        if ($mayEmpty) {
+            return true;
+        }
+
+        $value = is_array($value)?implode('-', $value):$value;
+        if (preg_match('/^(\d{2})[\-\/](\d{2})[\-\/](\d{4})$/', $value, $match)) {
+            return $match[3].'-'.$match[2].'-'.$match[1];
+        }
+
+        $value = str_replace('/', '-', $value);
         $pattern  = '/^\d{4}\-\d{2}\-\d{2}$/';
 
-        return (bool) ($mayEmpty || preg_match($pattern, $value));
-    }
-
-    /**
-     * Reverse date with delimiter and glue
-     * @return bool
-     */
-    protected function validationReverseDate($delimiter = null, $glue = null)
-    {
-        $delimiter = $delimiter?:'-';
-        $glue = $glue?:'-';
-
-        $value    = $this->getValue();
-        $x = explode($delimiter, $value);
-        krsort($x);
-
-        return implode($glue, $x);
+        return (bool) (preg_match($pattern, $value));
     }
 
     /**

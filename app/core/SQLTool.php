@@ -18,6 +18,29 @@ class SQLTool extends Prefab
     }
 
     /**
+     * Table list
+     *
+     * @param  array|null $filter
+     * @return array
+     */
+    public function tables(array $filter = null)
+    {
+        $filter = is_array($filter)?$filter:array_filter([$filter]);
+        $tables = [];
+        $result = $this->db->exec('show tables');
+        foreach ($result as $row) {
+            foreach ($row as $table) {
+                if (in_array($table, $filter)) {
+                    continue;
+                }
+                $tables[] = $table;
+            }
+        }
+
+        return $tables;
+    }
+
+    /**
      * Get database size in mb
      * @return int
      */
