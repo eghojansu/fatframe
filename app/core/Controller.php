@@ -117,7 +117,7 @@ abstract class Controller
     {
         $base->clear(static::KEY_PREVIOUS);
 
-        if ($this->noTemplate) {
+        if ($this->templateDisabled) {
             $view = $base->get('VIEW');
             if ($view) {
                 echo Template::instance()->render($view);

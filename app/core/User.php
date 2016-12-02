@@ -36,7 +36,7 @@ class User
     {
         $constant = get_class($this->map).'::TOKEN_NAME';
         $tokenName = constant($constant);
-        $ttl = 60;
+        $ttl = 0;
         $this->map->loadBy([$tokenName=>$token], ['limit'=>1], $ttl);
 
         $base = Base::instance();

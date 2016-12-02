@@ -17,12 +17,6 @@ class SQLTool extends Prefab
         $this->db = $db?:Base::instance()->get('DB.SQL');
     }
 
-    /**
-     * Table list
-     *
-     * @param  array|null $filter
-     * @return array
-     */
     public function tables(array $filter = null)
     {
         $filter = is_array($filter)?$filter:array_filter([$filter]);
@@ -63,12 +57,25 @@ SQL;
      */
     public function import($file)
     {
+        $sql = file_get_contents($file);
+        if ($sql) {
+            $this->db->exec($sql);
+        }
+
+        return $this;
+    }
+
+    /**
+     * Import sql file
+     * @param  string $file
+     */
+    public function importChunk($file, $chunk = 2048)
+    {
         $handle = fopen($file, "rb");
         if ($handle) {
-            $limit = 2048;
             $counter = 0;
             $buffer = '';
-            while (($line = fgets($handle, $limit)) !== false) {
+            while (($line = fgets($handle, $chunk)) !== false) {
                 if ('--' === substr($line, 0, 2) ||
                     empty(trim($line))
                     ) {
@@ -78,7 +85,7 @@ SQL;
                 $counter += strlen($line);
                 $buffer .= $line;
 
-                if ($counter >= $limit && ';' === substr(rtrim($line), -1, 1)) {
+                if ($counter >= $chunk && ';' === substr(rtrim($line), -1, 1)) {
                     $this->db->exec($buffer);
                     $buffer = '';
                     $counter = 0;

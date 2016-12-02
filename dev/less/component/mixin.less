@@ -1,4 +1,4 @@
-@mixin fa-bg-before {
+.fa-bg-before() {
     &:before {
         position: absolute;
         font-family: FontAwesome;
@@ -6,7 +6,7 @@
         font-weight: bold;
     }
 }
-@mixin fa-bg-after {
+.fa-bg-after() {
     &:after {
         position: absolute;
         font-family: FontAwesome;
@@ -15,8 +15,8 @@
     }
 }
 
-@mixin sortable-mixin {
-    @include fa-bg-before;
+.sortable-mixin() {
+    .fa-bg-before();
 
     &:before {
         position: relative;

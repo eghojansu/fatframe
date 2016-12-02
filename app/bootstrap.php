@@ -22,8 +22,11 @@ $config = [
     'AUTOLOAD'=>$root,
     'PAGE'=>'page',
     'LIMIT'=>'record',
-    'LIMIT_LIST'=>[5,10,20,25,50,100],
+    'LIMIT_LIST'=>[5,10],
     'SORT'=>'sort',
+    'ROLES'=>[
+        'Admin',
+    ],
 ];
 $base->mset($config);
 $base->config($root.'app/config/app.ini');

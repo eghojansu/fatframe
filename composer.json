@@ -14,7 +14,8 @@
     ],
 	"require": {
 		"php": ">=5.4",
-		"bcosca/fatfree-core": "~3.6"
+		"bcosca/fatfree-core": "~3.6",
+        "dompdf/dompdf": "^0.7.0"
 	},
     "require-dev": {
         "symfony/console": "~3.1",

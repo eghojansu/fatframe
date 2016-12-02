@@ -93,7 +93,7 @@ class SQLMapper extends Mapper implements CursorInterface
      */
     public function getPrevious($field)
     {
-        return $this->fields[$field]['previous'];
+        return $this->fields[$field]['initial'];
     }
 
     /**
@@ -156,7 +156,7 @@ class SQLMapper extends Mapper implements CursorInterface
      * Perform soft erase
      *
      * @param  string|array $filter
-     * @return $this
+     * @return bool
      */
     public function softErase($filter = null)
     {
@@ -182,6 +182,48 @@ class SQLMapper extends Mapper implements CursorInterface
     }
 
     /**
+     * Restore deleted
+     *
+     * @param  string|array $filter
+     * @return bool
+     */
+    public function restore($filter = null)
+    {
+        $this->checkTS([static::TS_DELETE]);
+
+        if ($filter) {
+            $filter = $this->combineFilter([], $filter);
+
+            $sql = sprintf('update %s set %s = null where %s',
+                $this->table,
+                $this->db->quotekey(static::TS_DELETE),
+                array_shift($filter)
+            );
+
+            return $this->db->exec($sql, $filter);
+        }
+
+        $this->set(static::TS_DELETE, null);
+        $out = $this->update();
+
+        return $out;
+    }
+
+    /**
+     * Clear trash
+     *
+     * @return bool
+     */
+    public function clearTrash()
+    {
+        $this->checkTS([static::TS_DELETE]);
+
+        $filter = sprintf('%s is not null', $this->db->quotekey(static::TS_DELETE));
+
+        return $this->erase($filter);
+    }
+
+    /**
      * Generate new ID based on format
      *
      * @param string $columName
@@ -192,6 +234,30 @@ class SQLMapper extends Mapper implements CursorInterface
      */
     public function nextID($columnName, $format, $assign = false, $filter = null)
     {
+        $dateFilter = [];
+        $boundPattern = '/\{([a-z0-9\- _\.]+)\}/i';
+        $date = null;
+        $start = 0;
+        $count = 0;
+        $pattern = preg_replace_callback($boundPattern, function($match) use (&$date, &$start, &$count) {
+            if (is_numeric($match[1])) {
+                return '(?<serial>'.str_replace('9', '[0-9]', $match[1]).')';
+            }
+
+            $date = date($match[1]);
+            $start = strpos($format, $match[1]);
+            $count = strlen($date);
+
+            return '(?<date>.{'.$count.'})';
+        }, $format);
+        if ($date) {
+            $dateFilter = ["substr($columnName,$start,$count) = :date", ':date'=>$date];
+        }
+        if ($dateFilter) {
+            $filter[0] .= ' and '.array_shift($dateFilter);
+            $filter = array_merge($dateFilter);
+        }
+
         $clone = clone $this;
         $clone->load($filter, [
             'limit'=>1,
@@ -199,13 +265,7 @@ class SQLMapper extends Mapper implements CursorInterface
             ]);
 
         $last = 0;
-        $boundPattern = '/\{([a-z0-9\- _\.]+)\}/i';
         if ($clone->valid()) {
-            $pattern = preg_replace_callback($boundPattern, function($match) {
-                return is_numeric($match[1])?
-                    '(?<serial>'.str_replace('9', '[0-9]', $match[1]).')':
-                    '(?<date>.{'.strlen(date($match[1])).'})';
-            }, $format);
             if (preg_match('/^'.$pattern.'$/i', $clone[$columnName], $match)) {
                 $last = $match['serial']*1;
             }
@@ -273,19 +333,19 @@ class SQLMapper extends Mapper implements CursorInterface
      * Define references, just another shortcut to load
      *
      * @param  string  $class   class name
-     * @param  string|array  $filter
-     * @param  array   $options
+     * @param  string pair id=foreign_id
      * @param  integer $ttl
      * @return $this
      */
-    protected function hasOne($class, $filter = null, array $options = null, $ttl = 0)
+    protected function hasOne($class, $map, $ttl = 0)
     {
-        $options += [
-            'limit'=>1,
-        ];
+        $map = explode('=', $map);
 
         $mapper = new $class;
-        $mapper->load($filter, $options, $ttl);
+        $field = [
+            $map[0]=>$this->get($map[1]),
+        ];
+        $mapper->loadBy($field, null, null, $ttl);
 
         return $mapper;
     }
@@ -294,16 +354,20 @@ class SQLMapper extends Mapper implements CursorInterface
      * Shortcut for loadBy
      *
      * @param  string  $class
-     * @param  string|array  $filter
-     * @param  array  $options
+     * @param  string pair id=foreign_id
      * @param  integer $ttl
      * @return $this|array
      */
-    protected function hasMany($class, $filter = null, array $options = null, $ttl = 0, $useFind = false)
+    protected function hasMany($class, $map, $ttl = 0, $useFind = false)
     {
-        $mapper = new $class;
+        $map = explode('=', $map);
 
-        return $mapper->loadBy([], $filter, $options, $ttl, $useFind);
+        $mapper = new $class;
+        $field = [
+            $map[0]=>$this->get($map[1]),
+        ];
+
+        return $mapper->loadBy($field, null, null, $ttl, $useFind);
     }
 
     /**

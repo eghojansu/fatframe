@@ -92,6 +92,13 @@ class Validation
         return $this;
     }
 
+    public function mergeError(array $errors)
+    {
+        $this->errors = array_merge($this->errors, $errors);
+
+        return $this;
+    }
+
     /**
      * Get error
      *
@@ -113,7 +120,7 @@ class Validation
         $str = isset($this->errors[$field])?implode(', ', $this->errors[$field]):null;
         $label = $this->getLabel($field);
 
-        return $str?$label.' '.str_replace($label, '', $str):$str;
+        return $str?(false===strpos($str, $label)?'':$label.' ').str_replace($label, '', $str):$str;
     }
 
     /**
@@ -229,6 +236,17 @@ class Validation
     }
 
     /**
+     * Sanitize simple array
+     * @return bool
+     */
+    protected function validationSimpleArray($required = true)
+    {
+        $value = $this->getValue();
+
+        return (is_array($value) && $value)?implode(',', $value):($required?!empty($value):true);
+    }
+
+    /**
      * Validate equal
      * @param  bool $str to compare with
      * @param  bool $fieldName str is field name
@@ -299,11 +317,15 @@ class Validation
     protected function validationMaxFloat($max = null, $length = null)
     {
         $number    = $this->getValue();
+        $number = str_replace(['Rp ', '%'], '', $number);
+        $number = false === strpos($number, ',')?$number:str_replace(['.',','],['','.'],$number);
         $isNumber  = is_numeric($number);
         $maxPassed = $isNumber && (is_null($max) || $number <= $max);
         $lenPassed = $isNumber && (is_null($length) || strlen($number) <= $length+1);
 
-        return (bool) ((''===$number || is_null($number)) || ($maxPassed && $lenPassed));
+        $passed = (bool) ((''===$number || is_null($number)) || ($maxPassed && $lenPassed));
+
+        return $passed ? $number: $passed;
     }
 
     /**
@@ -315,11 +337,15 @@ class Validation
     protected function validationMinFloat($min = null, $length = null)
     {
         $number    = $this->getValue();
+        $number = str_replace(['Rp ', '%'], '', $number);
+        $number = false === strpos($number, ',')?str_replace(['.',','],['','.'],$number):$number;
         $isNumber  = is_numeric($number);
         $minPassed = $isNumber && (is_null($min) || $number >= $min);
         $lenPassed = $isNumber && (is_null($length) || strlen($number) <= $length+1);
 
-        return (bool) ((''===$number || is_null($number)) || ($minPassed && $lenPassed));
+        $passed = (bool) ((''===$number || is_null($number)) || ($minPassed && $lenPassed));
+
+        return $passed ? $number: $passed;
     }
 
     /**
@@ -407,7 +433,7 @@ class Validation
             return $map->valid();
         }
 
-        return (bool) $mayEmpty;
+        return $mayEmpty?null:false;
     }
 
     /**
@@ -467,7 +493,7 @@ class Validation
         $mayEmpty &= ('' === $value || is_null($value));
 
         if ($mayEmpty) {
-            return true;
+            return null;
         }
 
         $value = is_array($value)?implode('-', $value):$value;
@@ -485,12 +511,9 @@ class Validation
      * Get current field value
      * @return mixed
      */
-    protected function getValue()
+    public function getValue()
     {
-        return $this->cursor ? (
-            ($this->map && $this->map->exists($this->cursor)) ? $this->map->get($this->cursor) : (
-                isset($this->lookup[$this->cursor])?$this->lookup[$this->cursor]:null)
-            ) : null;
+        return $this->cursor ? (isset($this->lookup[$this->cursor])?$this->lookup[$this->cursor]:null) : null;
     }
 
     /**

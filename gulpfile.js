@@ -1,5 +1,5 @@
 /* configuration ----------------------------------------------------------- */
-var browserSyncProxy = 'http://localhost/project/fa/fatframe';
+var browserSyncProxy = 'http://localhost/www/fa/fatframe';
 
 /* system ------------------------------------------------------------------ */
 var gulp = require('gulp');
@@ -29,16 +29,16 @@ gulp.task('inject-asset', ['copy-fonts'], function() {
         .pipe($.concat('vendor.js'))
         .pipe(gulp.dest('asset/js'))
         .pipe(browserSync.stream());
-    var bowerAllStream = gulp.src($.mainBowerFiles('**/*.scss'), {read:false})
+    var bowerAllStream = gulp.src($.mainBowerFiles('**/*.less'), {read:false})
     var appStream = gulp.src([
         'asset/js/*.js',
         'asset/css/*.css',
         '!asset/**/vendor.{css,js}',
         ], {read: false});
 
-    gulp.src('dev/sass/app.scss')
+    gulp.src('dev/less/app.less')
         .pipe($.inject($.streamSeries(bowerAllStream), {name: 'bower', addRootSlash:false, transform: assetInjector}))
-        .pipe(gulp.dest('dev/sass'))
+        .pipe(gulp.dest('dev/less'))
     gulp.src('app/view/layout/*.html')
         .pipe($.inject($.streamSeries(vendorScriptStream, vendorStyleStream), {name:'bower', transform: assetInjector}))
         .pipe($.inject($.streamSeries(appStream), {transform: assetInjector}))
@@ -51,9 +51,9 @@ gulp.task('copy-fonts', function() {
         .pipe(gulp.dest('asset/fonts'))
 });
 
-gulp.task('compile-sass', function() {
-    gulp.src('dev/sass/app.scss')
-        .pipe($.sass({outputStyle: 'nested'}))
+gulp.task('compile-style', function() {
+    gulp.src('dev/less/app.less')
+        .pipe($.less({outputStyle: 'nested'}))
         .pipe(gulp.dest('asset/css'))
         .pipe(browserSync.stream());
 });
@@ -66,9 +66,9 @@ gulp.task('watch-changes', function() {
         notify: true,
         online: false
     });
-    gulp.watch('dev/sass/**/*.scss', ['compile-sass']);
+    gulp.watch('dev/less/**/*.less', ['compile-style']);
     gulp.watch('bower.json', ['inject-asset']);
     gulp.watch(['app/**/*','asset/js/**/*']).on('change', browserSync.reload);
 });
 
-gulp.task('default', ['compile-sass','inject-asset','watch-changes']);
+gulp.task('default', ['compile-style','inject-asset','watch-changes']);

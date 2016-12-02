@@ -9,12 +9,14 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\Process\Exception\ProcessFailedException;
 use Symfony\Component\Process\Process;
+use fa;
 
 abstract class AbstractCommand extends Command
 {
     protected $io;
     protected $input;
     protected $output;
+    protected $startTime;
 
     protected function process($command, $cwd, $throwsError = false)
     {
@@ -38,13 +40,25 @@ abstract class AbstractCommand extends Command
         $this->io = new SymfonyStyle($input, $output);
         $this->input = $input;
         $this->output = $output;
+        $this->startTime = microtime(true);
 
         return $this;
     }
 
+    protected function notCompleted($message)
+    {
+        $diff = microtime(true)-$this->startTime;
+        $timeElapsed = sprintf(' [Time elapsed: %s]', fa::microtime($diff));
+
+        $this->io->error($message.$timeElapsed);
+    }
+
     protected function reallyDone($message)
     {
-        $this->io->success($message);
+        $diff = microtime(true)-$this->startTime;
+        $timeElapsed = sprintf(' [Time elapsed: %s]', fa::microtime($diff));
+
+        $this->io->block($message.$timeElapsed, 'DONE', 'fg=black;bg=yellow', ' ', true);
     }
 
     protected function info($info, $line = 1)

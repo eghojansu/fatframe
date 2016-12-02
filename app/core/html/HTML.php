@@ -4,16 +4,16 @@ namespace app\core\html;
 
 use Prefab;
 
-abstract class HTML extends Prefab
+class HTML extends Prefab
 {
-    public function element($element, $content, array $attrs = [])
+    public static function element($element, $content, array $attrs = [])
     {
-        $str = '<'.$element.$this->renderAttributes($attrs).'>'.$content.'</'.$element.'>';
+        $str = '<'.$element.static::renderAttributes($attrs).'>'.$content.'</'.$element.'>';
 
         return $str;
     }
 
-    protected function renderAttributes(array $attrs)
+    protected static function renderAttributes(array $attrs)
     {
         $str = '';
         foreach ($attrs as $key => $value) {
@@ -33,7 +33,7 @@ abstract class HTML extends Prefab
      * @param  array
      * @return array
      */
-    protected function mergeAttributes(array $a, array $b)
+    protected static function mergeAttributes(array $a, array $b)
     {
         foreach ($b as $key => $value) {
             if (isset($a[$key])) {

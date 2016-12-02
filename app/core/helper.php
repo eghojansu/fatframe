@@ -242,7 +242,7 @@ final class fa
         return $minus.$str;
     }
 
-    public static function dump($message, $halt = false, $cleanPrevious = false)
+    public static function dump($message, $halt = true, $cleanPrevious = true)
     {
         if ($cleanPrevious) {
             ob_clean();
@@ -255,6 +255,65 @@ final class fa
         if ($halt) {
             die;
         }
+    }
+
+    public static function defaultRenderer($checked,$options,$name)
+    {
+        $str = '';
+        $activeByValue = false;
+        foreach ($options as $id => $option) {
+            $checkedAttr = [];
+            if ($checked == $id) {
+                $checkedAttr['checked'] = true;
+                $activeByValue = true;
+            }
+            if (!$activeByValue && $option['default']) {
+                $checkedAttr['checked'] = true;
+            }
+            $o = \app\core\html\HTML::element('input', $option['name'], ['name'=>$name,'value'=>$id,'type'=>'radio']+$checkedAttr);
+            $str .= \app\core\html\HTML::element('label', $o, ['class'=>'radio-inline']);
+        }
+
+        return $str;
+    }
+
+    public static function defaultRendererDropdown($selected,$options,$name,$attrs)
+    {
+        $str = '';
+        $activeByValue = false;
+        foreach ($options as $id => $option) {
+            $selectedAttr = [];
+            if ($selected == $id) {
+                $selectedAttr['selected'] = true;
+                $activeByValue = true;
+            }
+            if (!$activeByValue && $option['default']) {
+                $selectedAttr['selected'] = true;
+            }
+            $str .= \app\core\html\HTML::element('option', $option['name'], ['value'=>$id]+$selectedAttr);
+        }
+
+        return $str;
+    }
+
+    public static function setting($name)
+    {
+        $setting = new app\entity\Setting;
+
+        return is_array($name)?$setting->vm($name):$setting->v($name);
+    }
+
+    public static function age($date, $format = '%y th')
+    {
+        if (!$date) {
+            return null;
+        }
+
+        $now = new DateTime;
+        $date = new DateTime($date);
+        $diff = $now->diff($date);
+
+        return $diff->format($format);
     }
 }
 
@@ -314,14 +373,68 @@ final class nav
 
     public static function left()
     {
+        $base = Base::instance();
         $menu = new app\core\html\Menu(null, ['attr'=>['class'=>'nav navbar-nav']]);
-        $menu
-            ->setActiveRoute(self::activeRoute())
-            ->add('Dashboard', self::attr('dashboard','dashboard'))
-            ->getParent()
-            ->add('Master', self::attrParent('hdd-o'))
-                ->add('Data User', self::attr('crud_index','users',true, ['args'=>['master'=>'user']]))
-        ;
+        $menu->setActiveRoute(self::activeRoute());
+
+        $employee    = $base['user']->isEmployee();
+        $admin       = $base['user']->hasRoles('admin');
+        $pendaftaran = $employee && $base['user']->hasRoles('pendaftaran');
+        $klinik      = $employee && $base['user']->hasRoles('klinik');
+        $igd         = $employee && $base['user']->hasRoles('igd');
+        $inap        = $employee && $base['user']->hasRoles('inap');
+        $penunjang   = $employee && $base['user']->hasRoles('penunjang');
+        $apotik      = $employee && $base['user']->hasRoles('apotik');
+        $billing     = $employee && $base['user']->hasRoles('billing');
+        $farmasi     = $employee && $base['user']->hasRoles('farmasi');
+        $enable      = false;
+
+        $menu->add($base['all.dashboard'], self::attr('dashboard','dashboard'), true);
+        $menu->add($base['all.registration'], self::attr('registration', 'edit'), $pendaftaran);
+        $menu->add($base['all.clinic'], self::attr('#', 'stethoscope'), $klinik);
+        $menu->add($base['all.igd'], self::attr('#', 'ambulance'), $igd);
+        $menu->add($base['all.opname'], self::attr('#', 'bed'), $inap);
+        $menu->add($base['all.support'], self::attr('#', 'heartbeat'), $penunjang);
+        $menu->add($base['all.store'], self::attr('#', 'medkit'), $apotik);
+        $menu->add($base['all.billing'], self::attr('#', 'credit-card'), $billing);
+        $menu->add($base['all.pharmacy'], self::attr('#', 'credit-card'), $farmasi);
+
+        $masterMenu = $menu->add('Master', self::attrParent('hdd-o'));
+        $masterMenu->add($base['all.treatment_class'], self::attr('treatment_class_index', 'dot-circle-o'), $admin);
+        $masterMenu->add($base['all.payment_option'], self::attr('payment_option_index', 'dot-circle-o'), $admin);
+        $masterMenu->add($base['all.bed_status'], self::attr('bed_status_index', 'dot-circle-o'), $admin);
+        $masterMenu->add($base['all.icd10'], self::attr('icd10_index', 'dot-circle-o'), $admin);
+        $masterMenu->add($base['all.icd9'], self::attr('icd9_index', 'dot-circle-o'), $admin);
+        $masterMenu->add($base['all.blood_type'], self::attr('blood_type_index', 'dot-circle-o'), $admin);
+        $masterMenu->add($base['all.checkin_option'], self::attr('checkin_option_index', 'dot-circle-o'), $admin);
+        $masterMenu->add($base['all.checkout_option'], self::attr('checkout_option_index', 'dot-circle-o'), $admin);
+        $masterMenu->add($base['all.education'], self::attr('education_index', 'dot-circle-o'), $admin);
+        $masterMenu->add($base['all.ethnic'], self::attr('ethnic_index', 'dot-circle-o'), $admin);
+        $masterMenu->add($base['all.gender'], self::attr('gender_index', 'dot-circle-o'), $admin);
+        $masterMenu->add($base['all.id_type'], self::attr('id_type_index', 'dot-circle-o'), $admin);
+        $masterMenu->add($base['all.job'], self::attr('job_index', 'dot-circle-o'), $admin);
+        $masterMenu->add($base['all.language'], self::attr('language_index', 'dot-circle-o'), $admin);
+        $masterMenu->add($base['all.marital_status'], self::attr('marital_status_index', 'dot-circle-o'), $admin);
+        $masterMenu->add($base['all.nationality'], self::attr('nationality_index', 'dot-circle-o'), $admin);
+        $masterMenu->add($base['all.religion'], self::attr('religion_index', 'dot-circle-o'), $admin);
+        $masterMenu->add($base['all.area'], self::attr('province_index', 'globe'), $admin);
+        $masterMenu->add($base['all.medkit_category'], self::attr('medkit_category_index', 'tags'), $admin);
+        $masterMenu->add($base['all.medkit'], self::attr('medkit_index', 'medkit'), $admin);
+
+        $administrasiMenu = $menu->add($base['all.administration'], self::attrParent('cog'));
+        $administrasiMenu->add($base['all.department'], self::attr('department_index','bank'), $admin);
+        $administrasiMenu->add($base['all.storage_stock'], self::attr('#','hashtag'), $farmasi);
+        $administrasiMenu->add($base['all.store_stock'], self::attr('#','hashtag'), $apotik);
+        $administrasiMenu->add($base['all.storage_order'], self::attr('#','sticky-note-o'), $farmasi);
+        $administrasiMenu->add($base['all.store_order'], self::attr('#','sticky-note-o'), $apotik);
+        $administrasiMenu->add($base['all.service_price'], self::attr('service_index','sticky-note'), $admin);
+        $administrasiMenu->add($base['all.employee'], self::attr('employee_index', 'users'), $admin);
+        $administrasiMenu->add($base['all.doctor'], self::attr('doctor_index', 'user-md'), $admin);
+        $administrasiMenu->add($base['all.upload'], self::attr('#','upload'), $enable);
+        $administrasiMenu->add($base['all.backup'], self::attr('#','database'), $enable);
+        $administrasiMenu->add($base['all.setting'], self::attr('setting_index', 'cog'), $admin);
+
+        $menu->add('Laporan', self::attr('#', 'files-o'));
 
         return $menu->render();
     }
@@ -379,11 +492,16 @@ class filter
     public static function getFilters()
     {
         return [
+            'rupiah'=>'rupiah',
             'bool'=>'bool',
             'rdate'=>'rdate',
-            'rdatetime'=>'rdtime',
-            'age'=>'age',
+            'rdtime'=>'rdatetime',
         ];
+    }
+
+    public static function rupiah($val, $prefix = 'Rp ')
+    {
+        return is_numeric($val)?$prefix.number_format($val, 2, ',', '.'):null;
     }
 
     public static function bool($val)
@@ -397,19 +515,6 @@ class filter
         krsort($date);
 
         return $date?implode('-', $date):null;
-    }
-
-    public static function age($date, $format = '%y th')
-    {
-        if (!$date) {
-            return null;
-        }
-
-        $now = new DateTime;
-        $date = new DateTime($date);
-        $diff = $now->diff($date);
-
-        return $diff->format($format);
     }
 
     public static function rdatetime($date, $format = 'd-m-Y H:i:s')

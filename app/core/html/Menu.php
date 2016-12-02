@@ -9,7 +9,7 @@ class Menu extends HTML
     protected $parent;
     protected $menu;
     protected $menuKey;
-    protected $hide;
+    protected $show;
     protected $option;
     protected $activeRoute;
     protected $activeClass = 'active';
@@ -17,9 +17,9 @@ class Menu extends HTML
     protected $childs = [];
     protected $default = [];
 
-    public function __construct($menu = null, array $option = null, Menu $parent = null, $hide = false)
+    public function __construct($menu = null, array $option = null, Menu $parent = null, $show = true)
     {
-        $this->hide = $hide;
+        $this->show = $show;
         $this->menu = $menu;
         $this->parent = $parent;
         $this->menuKey = implode('.', array_filter([$this->parent?$this->parent->getKey():'',$this->menu]));
@@ -37,9 +37,9 @@ class Menu extends HTML
         ];
     }
 
-    public function add($menu, array $option = null, $hide = false)
+    public function add($menu, array $option = null, $show = true)
     {
-        $child = new Menu($menu, $option, $this, $hide);
+        $child = new Menu($menu, $option, $this, $show);
         $child
             ->setDefault($this->default)
             ->setActiveClass($this->activeClass)
@@ -48,17 +48,6 @@ class Menu extends HTML
         $this->childs[$menu] =& $child;
 
         return $child;
-    }
-
-    public function addDivider(array $option = [], $hide = false)
-    {
-        $option += [
-            'divider'=>true,
-        ];
-
-        $this->add(null, $option, $hide);
-
-        return $this;
     }
 
     public function &get($menu)
@@ -78,6 +67,17 @@ class Menu extends HTML
         }
 
         return $var;
+    }
+
+    public function addDivider(array $option = [], $show = true)
+    {
+        $option += [
+            'divider'=>true,
+        ];
+
+        $this->add(null, $option, $show);
+
+        return $this;
     }
 
     public function isRoot()
@@ -167,7 +167,7 @@ class Menu extends HTML
 
     public function isHidden()
     {
-        return $this->hide;
+        return !$this->show;
     }
 
     public function isActive()
@@ -213,10 +213,15 @@ class Menu extends HTML
                 ] + $default['list'];
 
                 if ($active) {
-                    $option['list'] = self::mergeAttributes($option['list'], ['class'=>$this->getActiveClass()]);
+                    $option['list'] = self::mergeAttributes($option['list'], ['class'=>$child->getActiveClass()]);
                 }
 
-                $listContent = trim(self::element('a', $option['prefix'].$menu.$option['suffix'], $option['link']).PHP_EOL.$child->render());
+                $childStr = $child->render();
+                if ($child->hasChild() && !$childStr) {
+                    continue;
+                }
+
+                $listContent = trim(self::element('a', $option['prefix'].$menu.$option['suffix'], $option['link']).PHP_EOL.$childStr);
             }
 
             $str .= self::element('li', $listContent, $option['list']).PHP_EOL;

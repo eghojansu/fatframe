@@ -21,9 +21,22 @@ class CreateUserCommand extends AbstractCommand
         $this->configureIO($input, $output);
 
         $map = new User;
-        $map->set('username', 'admin');
-        $map->set('new_password', 'admin');
-        $map->set('roles', 'admin');
+
+        $username = $this->io->ask('Username : ', 'admin');
+        $password = $this->io->ask('Password : ', 'admin');
+        $roles = $this->io->ask('Roles (separate by comma) : ', 'admin');
+
+        $search = ['username'=>$username];
+        $map->loadBy($search);
+
+        if ($map->valid()) {
+            $this->notCompleted("username '$username' sudah ada");
+            return;
+        }
+
+        $map->set('username', $username);
+        $map->set('new_password', $password);
+        $map->set('roles', str_replace(' ', '', $roles));
         $map->save();
 
         $this->reallyDone('User created');

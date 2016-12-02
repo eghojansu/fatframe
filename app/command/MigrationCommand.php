@@ -23,6 +23,7 @@ class MigrationCommand extends AbstractCommand
     public function execute(InputInterface $input, OutputInterface $output)
     {
         $this->configureIO($input, $output);
+        set_time_limit(600);
 
         $tool = new SQLTool(fa::db());
         $migrationDir = $this->base()->get('APPDIR').'migration/'.$input->getArgument('mode').'/';

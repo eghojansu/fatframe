@@ -28,6 +28,7 @@ class Form extends HTML
     protected $only = [];
     protected $labelElement = 'label';
     protected $method = 'POST';
+    protected $action = false;
     protected $submitKey = 'submitted';
 
     /**
@@ -71,6 +72,18 @@ class Form extends HTML
     public function rowClose()
     {
         return '';
+    }
+
+    public function getLabels()
+    {
+        return $this->labels;
+    }
+
+    public function prependLabels(array $labels)
+    {
+        $this->labels = array_merge($labels, $this->labels);
+
+        return $this;
     }
 
     public function error($field)
@@ -207,6 +220,7 @@ class Form extends HTML
     {
         $attrs = $this->attrs;
         $attrs['method'] = $this->method;
+        $attrs['action'] = $this->action;
         $str = '<form'.$this->renderAttributes($attrs).'>'.$this->onOpen();
 
         return $str;
@@ -421,7 +435,7 @@ class Form extends HTML
         unset($attrs['options'],$attrs['checked'],$attrs['renderer']);
 
         if ($renderer && is_callable($renderer)) {
-            $str = call_user_func_array($renderer, [$checked,$options]);
+            $str = call_user_func_array($renderer, [$checked,$options,$name,$attrs]);
         } else {
             $str = '';
             foreach ($options as $label => $value) {
@@ -453,7 +467,7 @@ class Form extends HTML
         unset($attrs['options'],$attrs['checked'],$attrs['renderer']);
 
         if ($renderer && is_callable($renderer)) {
-            $str = call_user_func_array($renderer, [$checked,$options]);
+            $str = call_user_func_array($renderer, [$checked,$options,$name]);
         } else {
             $str = '';
             foreach ($options as $label => $value) {
@@ -490,8 +504,9 @@ class Form extends HTML
             unset($v[$key], $attrs[$value]);
         }
 
+        $v['selected'] = $v['selected']?(is_array($v['selected'])?$v['selected']:explode(',', $v['selected'])):[];
         if ($v['renderer'] && is_callable($v['renderer'])) {
-            $optionStr = call_user_func_array($v['renderer'], [$v['selected'],$v['options']]);
+            $optionStr = call_user_func_array($v['renderer'], [$v['selected'],$v['options'],$name,$attrs]);
         } else {
             $optionStr = '';
             if ($v['placeholder']) {
@@ -519,13 +534,13 @@ class Form extends HTML
                         $key = 'data-'.str_replace('_', '-', $key);
                         $a[$key] = $keyvalue;
                     }
-                    if ($vvalue == $v['selected']) {
+                    if (in_array($vvalue, $v['selected'])) {
                         $a[] = 'selected';
                     }
                     $tmp .= parent::element('option', $label, $a);
                 } else {
                     $a = ['value'=>$value];
-                    if ($value == $v['selected']) {
+                    if (in_array($value, $v['selected'])) {
                         $a[] = 'selected';
                     }
                     $optionStr .= parent::element('option', $label, $a);
@@ -695,6 +710,35 @@ class Form extends HTML
         $this->method = strtoupper($method);
 
         return $this;
+    }
+
+    /**
+     * Method
+     * @param string
+     */
+    public function getMethod()
+    {
+        return $this->method;
+    }
+
+    /**
+     * Action
+     * @param string
+     */
+    public function setAction($action)
+    {
+        $this->action = $action;
+
+        return $this;
+    }
+
+    /**
+     * Action
+     * @param string
+     */
+    public function getAction()
+    {
+        return $this->action;
     }
 
     /**
